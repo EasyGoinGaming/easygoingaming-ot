@@ -23,7 +23,7 @@ ARG TAG=v1.6
 RUN git clone --recursive --branch ${TAG} https://github.com/otland/forgottenserver.git
 
 WORKDIR /build/forgottenserver
-RUN mkdir build && cd build && cmake .. && make -j$(nproc)
+RUN mkdir build && cd build && cmake .. -DUSE_LUAJIT=ON && make -j$(nproc)
 
 # runtime stage: only libs + binary
 # runtime stage
