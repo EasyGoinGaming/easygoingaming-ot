@@ -28,18 +28,18 @@ RUN mkdir build && cd build && cmake .. && make -j$(nproc)
 # runtime stage: only libs + binary
 FROM debian:bookworm-slim
 
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    libluajit-5.1-2 \
-    libmariadb3 \
-    libboost-date-time1.74.0 \
-    libboost-system1.74.0 \
-    libboost-iostreams1.74.0 \
-    libpugixml1v5 \
-    libcrypto++8 \
-    libfmt8 \
-    zlib1g \
-    ca-certificates && \
-    rm -rf /var/lib/apt/lists/*
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+  ca-certificates \
+  libluajit-5.1-2 \
+  libmariadb3 \
+  libboost-date-time \
+  libboost-system \
+  libboost-iostreams \
+  libpugixml1v5 \
+  libcryptopp \
+  libfmt \
+  zlib1g \
+  && rm -rf /var/lib/apt/lists/*
 
 # copy compiled binary
 COPY --from=builder /build/forgottenserver/build/tfs /usr/local/bin/tfs
