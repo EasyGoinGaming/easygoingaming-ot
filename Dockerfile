@@ -53,7 +53,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libboost-json1.83.0 \
     libboost-locale1.83.0 \
     libpugixml1v5 \
-    libcryptopp8 \
+    libcrypto++8 \
     libfmt9 \
     zlib1g \
     mariadb-client \
