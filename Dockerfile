@@ -51,15 +51,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   libboost-date-time1.83.0 \
   libboost-json1.83.0 \
   libpugixml1v5 \
-  libcryptopp8 \
+  libcrypto++8 \
   libfmt9 \
   zlib1g \
   && rm -rf /var/lib/apt/lists/*
 
-# Copy binary
 COPY --from=builder /build/forgottenserver/build/tfs /usr/local/bin/tfs
 
-# Pterodactyl-compatible user
 RUN useradd -m -u 988 container
 USER container
 
