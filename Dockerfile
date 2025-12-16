@@ -11,7 +11,12 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     libluajit-5.1-dev \
     libmariadb-dev-compat \
-    libboost-all-dev \
+    libboost-date-time-dev \
+    libboost-system-dev \
+    libboost-iostreams-dev \
+    libboost-regex-dev \
+    libboost-locale-dev \
+    libboost-json-dev \
     libpugixml-dev \
     libcrypto++-dev \
     libfmt-dev \
@@ -37,25 +42,34 @@ FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Runtime dependencies only
 RUN apt-get update && apt-get install -y --no-install-recommends \
-  ca-certificates \
-  libluajit-5.1-2 \
-  libmariadb3 \
-  libboost-iostreams1.83.0 \
-  libboost-system1.83.0 \
-  libboost-date-time1.83.0 \
-  libboost-locale1.83.0 \
-  libboost-json1.83.0 \
-  libpugixml1v5 \
-  libcrypto++8 \
-  libfmt9 \
-  zlib1g \
-  && rm -rf /var/lib/apt/lists/*
+    ca-certificates \
+    libluajit-5.1-2 \
+    libmariadb3 \
+    libboost-iostreams1.83.0 \
+    libboost-system1.83.0 \
+    libboost-date-time1.83.0 \
+    libboost-json1.83.0 \
+    libboost-locale1.83.0 \
+    libpugixml1v5 \
+    libcryptopp8 \
+    libfmt9 \
+    zlib1g \
+    mariadb-client \
+    && rm -rf /var/lib/apt/lists/*
 
+# Copy TFS binary
 COPY --from=builder /build/forgottenserver/build/tfs /usr/local/bin/tfs
 
+# Copy runtime entrypoint
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Pterodactyl-compatible user
 RUN useradd -m -u 988 container
 USER container
 
-WORKDIR /home/container
-ENTRYPOINT ["tfs"]
+WORKDIR /mnt/server
+
+ENTRYPOINT ["/entrypoint.sh"]
