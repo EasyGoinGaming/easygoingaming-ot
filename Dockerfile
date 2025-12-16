@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y \
     libboost-iostreams-dev \
     libboost-regex-dev \
     libboost-locale-dev \
+    libboost-json-dev \
     libpugixml-dev \
     libcrypto++-dev \
     libfmt-dev \
