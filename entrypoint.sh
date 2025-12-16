@@ -1,28 +1,40 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
-cd /mnt/server
+SERVER_DIR="/mnt/server"
+SCHEMA_FILE="$SERVER_DIR/schema.sql"
+
+cd "$SERVER_DIR"
 
 echo ">> Checking database state..."
 
-if mysql \
+TABLE_COUNT=$(mysql \
   -h "${MYSQL_HOST}" \
   -P "${MYSQL_PORT}" \
   -u "${MYSQL_USER}" \
   -p"${MYSQL_PASSWORD}" \
-  "${MYSQL_DATABASE}" \
-  -e "SHOW TABLES;" 2>/dev/null | grep -q .; then
-    echo ">> Database already initialized."
+  -D "${MYSQL_DATABASE}" \
+  -sN -e "SHOW TABLES;" | wc -l || true)
+
+if [ "$TABLE_COUNT" -eq 0 ]; then
+  echo ">> Database empty, importing schema.sql..."
+
+  if [ ! -f "$SCHEMA_FILE" ]; then
+    echo "!! ERROR: schema.sql not found at $SCHEMA_FILE"
+    exit 1
+  fi
+
+  mysql \
+    -h "${MYSQL_HOST}" \
+    -P "${MYSQL_PORT}" \
+    -u "${MYSQL_USER}" \
+    -p"${MYSQL_PASSWORD}" \
+    "${MYSQL_DATABASE}" < "$SCHEMA_FILE"
+
+  echo ">> Database schema imported."
 else
-    echo ">> Database empty, importing schema.sql..."
-    mysql \
-      -h "${MYSQL_HOST}" \
-      -P "${MYSQL_PORT}" \
-      -u "${MYSQL_USER}" \
-      -p"${MYSQL_PASSWORD}" \
-      "${MYSQL_DATABASE}" < schema.sql
-    echo ">> Schema import complete."
+  echo ">> Database already initialized ($TABLE_COUNT tables found)."
 fi
 
-echo ">> Starting The Forgotten Server"
-exec tfs
+echo ">> Starting TFS..."
+exec /usr/local/bin/tfs
