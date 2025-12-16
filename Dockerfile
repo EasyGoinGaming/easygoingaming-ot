@@ -38,7 +38,7 @@ RUN mkdir build \
 # =========================
 # Runtime stage
 # =========================
-FROM FROM ubuntu:24.04
+FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
