@@ -28,7 +28,7 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/EasyGoinGaming/ot-tfs-runtime:latest
-            ghcr.io/EasyGoinGaming/ot-tfs-runtime:v1.6
+            ghcr.io/easygoingaming/ot-tfs-runtime:latest
+            ghcr.io/easygoingaming/ot-tfs-runtime:v1.6
           build-args: |
             TAG=v1.6
