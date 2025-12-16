@@ -26,25 +26,24 @@ WORKDIR /build/forgottenserver
 RUN mkdir build && cd build && cmake .. && make -j$(nproc)
 
 # runtime stage: only libs + binary
+# runtime stage
 FROM debian:bookworm-slim
 
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
   ca-certificates \
   libluajit-5.1-2 \
   libmariadb3 \
-  libboost-date-time \
-  libboost-system \
-  libboost-iostreams \
+  libboost-date-time1.74.0 \
+  libboost-system1.74.0 \
+  libboost-iostreams1.74.0 \
   libpugixml1v5 \
-  libcryptopp \
-  libfmt \
+  libcrypto++8 \
+  libfmt9 \
   zlib1g \
   && rm -rf /var/lib/apt/lists/*
 
-# copy compiled binary
 COPY --from=builder /build/forgottenserver/build/tfs /usr/local/bin/tfs
 
-# set runtime entry
 WORKDIR /home/container
 RUN useradd -m -u 988 container
 USER container
