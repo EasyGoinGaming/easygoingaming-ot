@@ -1,16 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-# Resolve server directory (Pterodactyl-safe)
-if [ -d "/mnt/server" ]; then
-  SERVER_DIR="/mnt/server"
-elif [ -d "/home/container" ]; then
-  SERVER_DIR="/home/container"
-else
-  echo "!! ERROR: Cannot locate server directory"
-  exit 1
-fi
-
+SERVER_DIR="/home/container"
 SCHEMA_FILE="$SERVER_DIR/schema.sql"
 
 cd "$SERVER_DIR"
