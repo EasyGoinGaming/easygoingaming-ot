@@ -8,7 +8,8 @@ cd "$SERVER_DIR"
 
 echo ">> Server directory: $SERVER_DIR"
 
-# ---- Database availability check ----
+trap 'echo ">> SIGTERM received, shutting down TFS"' SIGTERM
+
 echo ">> Checking database connectivity..."
 
 if ! mysqladmin ping \
@@ -17,15 +18,12 @@ if ! mysqladmin ping \
   -u "${MYSQL_USER}" \
   -p"${MYSQL_PASSWORD}" \
   --silent; then
-
-  echo ">> Database not reachable yet — skipping schema check."
-  echo ">> Starting TFS without database."
+  echo ">> Database not reachable — starting TFS without DB."
   exec /usr/local/bin/tfs
 fi
 
 echo ">> Database reachable."
 
-# ---- Schema check ----
 TABLE_COUNT=$(mysql \
   -h "${MYSQL_HOST}" \
   -P "${MYSQL_PORT}" \
