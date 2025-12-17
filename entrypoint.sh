@@ -47,7 +47,7 @@ mkdir -p \
 
 # ---- Start nginx using rendered config ----
 echo ">> Starting nginx..."
-nginx -c "${NGINX_RENDERED_CONF}"
+nginx -c /home/container/nginx.conf -p /home/container
 
 # ---- Ensure RSA key exists (TFS expects it next to config.lua) ----
 if [ ! -f "${SERVER_DIR}/key.pem" ]; then
