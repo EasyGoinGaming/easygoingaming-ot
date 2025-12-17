@@ -16,9 +16,35 @@ mkdir -p "${SERVER_DIR}/www/cache" "${SERVER_DIR}/www/config"
 echo ">> Rendering nginx config for WEB_PORT=${WEB_PORT}..."
 sed "s/{{WEB_PORT}}/${WEB_PORT}/g" /etc/nginx/template.conf > "${NGINX_RENDERED_CONF}"
 
-# ---- Start PHP-FPM ----
-echo ">> Starting PHP-FPM..."
-php-fpm8.3 -D
+# ---- Prepare PHP-FPM runtime config (Pterodactyl-safe) ----
+PHP_FPM_CONF="${SERVER_DIR}/php-fpm.conf"
+PHP_FPM_SOCK="${SERVER_DIR}/php-fpm.sock"
+
+cat > "${PHP_FPM_CONF}" <<EOF
+[global]
+error_log = /proc/self/fd/2
+daemonize = yes
+pid = ${SERVER_DIR}/php-fpm.pid
+
+[www]
+user = container
+group = container
+listen = ${PHP_FPM_SOCK}
+listen.owner = container
+listen.group = container
+listen.mode = 0660
+
+pm = dynamic
+pm.max_children = 5
+pm.start_servers = 2
+pm.min_spare_servers = 1
+pm.max_spare_servers = 3
+
+clear_env = no
+EOF
+
+echo ">> Starting PHP-FPM with custom config..."
+php-fpm8.3 --fpm-config "${PHP_FPM_CONF}"
 
 # ---- Start nginx using rendered config ----
 echo ">> Starting nginx..."
