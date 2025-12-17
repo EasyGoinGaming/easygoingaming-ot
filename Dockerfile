@@ -56,6 +56,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libfmt9 \
     zlib1g \
     mariadb-client \
+    nginx \
+    php-fpm \
+    php-mysql \
+    php-gd \
+    php-mbstring \
+    php-xml \
+    php-curl \
+    php-zip \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /build/forgottenserver/build/tfs /usr/local/bin/tfs
