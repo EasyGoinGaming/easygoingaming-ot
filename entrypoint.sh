@@ -51,6 +51,18 @@ EOF
 echo ">> Starting PHP-FPM..."
 php-fpm8.3 --fpm-config "${PHP_FPM_CONF}" &
 
+# ---- MyAAC Composer bootstrap ----
+if [ -d "${SERVER_DIR}/myaac" ]; then
+  cd "${SERVER_DIR}/myaac"
+
+  if [ ! -d vendor ]; then
+    echo ">> Installing MyAAC PHP dependencies..."
+    php composer.phar install --no-dev --optimize-autoloader
+  else
+    echo ">> MyAAC dependencies already installed."
+  fi
+fi
+
 # ---- Start nginx ----
 echo ">> Starting nginx..."
 nginx -c "${NGINX_RENDERED_CONF}" -p "${SERVER_DIR}"
