@@ -130,4 +130,5 @@ trap term_handler SIGTERM SIGINT
 
 # ---- Start TFS (PID 1) ----
 echo ">> Starting TFS..."
-exec /usr/local/bin/tfs
+exec /bin/bash -c "cd '${SERVER_DIR}' && exec /usr/local/bin/tfs"
+
