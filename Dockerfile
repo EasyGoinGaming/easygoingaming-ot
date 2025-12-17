@@ -42,8 +42,10 @@ FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
     ca-certificates \
+    curl \
     libluajit-5.1-2 \
     libmariadb3 \
     libboost-iostreams1.83.0 \
@@ -64,13 +66,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     php8.3-xml \
     php8.3-curl \
     php8.3-zip \
-    # Node.js LTS (for MyAAC)
-RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
-    && apt-get install -y --no-install-recommends nodejs \
-    && npm --version \
-    && node --version
+ \
+ # Node.js LTS (for MyAAC)
+ && curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
+ && apt-get install -y --no-install-recommends nodejs \
+ \
+ # Sanity check
+ && node --version \
+ && npm --version \
+ \
+ # Cleanup
+ && rm -rf /var/lib/apt/lists/*
 
-    && rm -rf /var/lib/apt/lists/*
 
 # TFS binary
 COPY --from=builder /build/forgottenserver/build/tfs /usr/local/bin/tfs
