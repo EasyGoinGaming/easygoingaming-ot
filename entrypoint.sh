@@ -2,22 +2,25 @@
 set -euo pipefail
 
 SERVER_DIR="/home/container"
-PHP_FPM_BIN="$(command -v php-fpm8.3 || command -v php-fpm8.2)"
 
 cd "$SERVER_DIR"
-
 echo ">> Server directory: $SERVER_DIR"
 
-# ---- Start PHP-FPM ----
+# ---- Ensure directories ----
+mkdir -p www cache config
+
+# ---- Render nginx port ----
+sed -i "s/{{WEB_PORT}}/${WEB_PORT}/g" /etc/nginx/conf.d/default.conf
+
+# ---- Start PHP-FPM (foreground-compatible) ----
 echo ">> Starting PHP-FPM..."
-$PHP_FPM_BIN --daemonize
+php-fpm8.3 -D
 
-# ---- Configure nginx ----
-echo ">> Configuring nginx..."
-sed "s/{{WEB_PORT}}/${WEB_PORT}/g" nginx/default.conf > /tmp/nginx.conf
-nginx -c /tmp/nginx.conf
+# ---- Start nginx ----
+echo ">> Starting nginx..."
+nginx
 
-# ---- Database bootstrap (same as before) ----
+# ---- Database bootstrap ----
 echo ">> Checking database connectivity..."
 
 if mysqladmin ping \
@@ -51,6 +54,6 @@ fi
 # ---- Signal handling ----
 trap 'echo ">> Shutting down..."; nginx -s quit; pkill php-fpm; exit 0' SIGTERM SIGINT
 
-# ---- Start TFS ----
+# ---- Start TFS (PID 1) ----
 echo ">> Starting TFS..."
 exec /usr/local/bin/tfs
