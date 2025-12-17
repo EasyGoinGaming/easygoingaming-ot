@@ -34,6 +34,7 @@ RUN mkdir build \
  && cd build \
  && cmake .. -DUSE_LUAJIT=ON \
  && make -j$(nproc)
+COPY nginx/default.conf /etc/nginx/conf.d/default.conf
 
 # =========================
 # Runtime stage
@@ -69,6 +70,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=builder /build/forgottenserver/build/tfs /usr/local/bin/tfs
 
 COPY entrypoint.sh /entrypoint.sh
+COPY nginx/default.conf /etc/nginx/conf.d/default.conf
+
 RUN chmod +x /entrypoint.sh
 
 RUN useradd -m -u 988 container
