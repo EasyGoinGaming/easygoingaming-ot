@@ -2,61 +2,78 @@
 set -euo pipefail
 
 SERVER_DIR="/home/container"
+NGINX_RENDERED_CONF="${SERVER_DIR}/nginx.conf"
 
 cd "$SERVER_DIR"
 echo ">> Server directory: $SERVER_DIR"
 
-# ---- Ensure directories ----
-mkdir -p www cache config
+# ---- Ensure web directories ----
+mkdir -p "${SERVER_DIR}/www"
+mkdir -p "${SERVER_DIR}/www/cache" "${SERVER_DIR}/www/config"
 
-# ---- Render nginx port ----
-sed -i "s/{{WEB_PORT}}/${WEB_PORT}/g" /etc/nginx/conf.d/default.conf
+# ---- Render nginx config into writable location ----
+: "${WEB_PORT:=8080}"
+echo ">> Rendering nginx config for WEB_PORT=${WEB_PORT}..."
+sed "s/{{WEB_PORT}}/${WEB_PORT}/g" /etc/nginx/template.conf > "${NGINX_RENDERED_CONF}"
 
-# ---- Start PHP-FPM (foreground-compatible) ----
+# ---- Start PHP-FPM ----
 echo ">> Starting PHP-FPM..."
 php-fpm8.3 -D
 
-# ---- Start nginx ----
+# ---- Start nginx using rendered config ----
 echo ">> Starting nginx..."
-nginx
+nginx -c "${NGINX_RENDERED_CONF}"
 
-# ---- Database bootstrap ----
+# ---- Ensure RSA key exists (TFS expects it next to config.lua) ----
+if [ ! -f "${SERVER_DIR}/key.pem" ]; then
+  echo ">> Generating RSA key..."
+  openssl genpkey -algorithm RSA -out "${SERVER_DIR}/key.pem" -pkeyopt rsa_keygen_bits:2048
+  chmod 600 "${SERVER_DIR}/key.pem"
+fi
+
+# ---- Optional schema import (only if DB reachable + empty + schema.sql exists) ----
 echo ">> Checking database connectivity..."
-
 if mysqladmin ping \
-  -h "${MYSQL_HOST}" \
-  -P "${MYSQL_PORT}" \
-  -u "${MYSQL_USER}" \
-  -p"${MYSQL_PASSWORD}" \
+  -h "${MYSQL_HOST:-db}" \
+  -P "${MYSQL_PORT:-3306}" \
+  -u "${MYSQL_USER:-root}" \
+  -p"${MYSQL_PASSWORD:-}" \
   --silent; then
 
-  TABLE_COUNT=$(mysql \
-    -h "${MYSQL_HOST}" \
-    -P "${MYSQL_PORT}" \
-    -u "${MYSQL_USER}" \
-    -p"${MYSQL_PASSWORD}" \
-    -D "${MYSQL_DATABASE}" \
-    -sN -e "SHOW TABLES;" | wc -l)
+  echo ">> Database reachable."
 
-  if [ "$TABLE_COUNT" -eq 0 ] && [ -f schema.sql ]; then
-    echo ">> Importing schema.sql..."
+  TABLE_COUNT="$(mysql \
+    -h "${MYSQL_HOST:-db}" \
+    -P "${MYSQL_PORT:-3306}" \
+    -u "${MYSQL_USER:-root}" \
+    -p"${MYSQL_PASSWORD:-}" \
+    -D "${MYSQL_DATABASE:-forgottenserver}" \
+    -sN -e "SHOW TABLES;" | wc -l)"
+
+  if [ "${TABLE_COUNT}" -eq 0 ] && [ -f "${SERVER_DIR}/schema.sql" ]; then
+    echo ">> Database empty, importing schema.sql..."
     mysql \
-      -h "${MYSQL_HOST}" \
-      -P "${MYSQL_PORT}" \
-      -u "${MYSQL_USER}" \
-      -p"${MYSQL_PASSWORD}" \
-      "${MYSQL_DATABASE}" < schema.sql
+      -h "${MYSQL_HOST:-db}" \
+      -P "${MYSQL_PORT:-3306}" \
+      -u "${MYSQL_USER:-root}" \
+      -p"${MYSQL_PASSWORD:-}" \
+      "${MYSQL_DATABASE:-forgottenserver}" < "${SERVER_DIR}/schema.sql"
+    echo ">> Schema imported."
+  else
+    echo ">> Database already initialized (${TABLE_COUNT} tables) or schema.sql missing."
   fi
 else
   echo ">> Database not reachable — skipping schema import."
 fi
 
-# ---- Signal handling ----
-trap 'echo ">> Shutting down..."; nginx -s quit; pkill php-fpm; exit 0' SIGTERM SIGINT
-if [ ! -f key.pem ]; then
-  openssl genpkey -algorithm RSA -out key.pem -pkeyopt rsa_keygen_bits:2048
-  chmod 600 key.pem
-fi
+# ---- Signal handling (graceful) ----
+term_handler() {
+  echo ">> Shutting down..."
+  nginx -s quit || true
+  pkill php-fpm8.3 || true
+  exit 0
+}
+trap term_handler SIGTERM SIGINT
 
 # ---- Start TFS (PID 1) ----
 echo ">> Starting TFS..."
