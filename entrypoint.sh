@@ -40,6 +40,10 @@ EOF
 
 echo ">> Starting PHP-FPM with custom config..."
 php-fpm8.3 --fpm-config "${PHP_FPM_CONF}"
+NGINX_DIR="/home/container/nginx"
+
+mkdir -p \
+  "$NGINX_DIR"/{tmp,logs,client_body,fastcgi,proxy,uwsgi,scgi}
 
 # ---- Start nginx using rendered config ----
 echo ">> Starting nginx..."
