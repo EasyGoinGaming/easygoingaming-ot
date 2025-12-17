@@ -64,6 +64,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     php8.3-xml \
     php8.3-curl \
     php8.3-zip \
+    # Node.js LTS (for MyAAC)
+RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
+    && npm --version \
+    && node --version
+
     && rm -rf /var/lib/apt/lists/*
 
 # TFS binary
