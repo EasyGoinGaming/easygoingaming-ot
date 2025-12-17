@@ -42,7 +42,6 @@ FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Runtime dependencies only
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     libluajit-5.1-2 \
@@ -59,17 +58,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     mariadb-client \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy TFS binary
 COPY --from=builder /build/forgottenserver/build/tfs /usr/local/bin/tfs
 
-# Copy runtime entrypoint
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Pterodactyl-compatible user
 RUN useradd -m -u 988 container
 USER container
 
-WORKDIR /mnt/server
+WORKDIR /home/container
 
 ENTRYPOINT ["/entrypoint.sh"]
