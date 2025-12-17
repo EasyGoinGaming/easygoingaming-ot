@@ -53,6 +53,10 @@ fi
 
 # ---- Signal handling ----
 trap 'echo ">> Shutting down..."; nginx -s quit; pkill php-fpm; exit 0' SIGTERM SIGINT
+if [ ! -f key.pem ]; then
+  openssl genpkey -algorithm RSA -out key.pem -pkeyopt rsa_keygen_bits:2048
+  chmod 600 key.pem
+fi
 
 # ---- Start TFS (PID 1) ----
 echo ">> Starting TFS..."
