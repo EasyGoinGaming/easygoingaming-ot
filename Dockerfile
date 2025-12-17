@@ -34,7 +34,6 @@ RUN mkdir build \
  && cd build \
  && cmake .. -DUSE_LUAJIT=ON \
  && make -j$(nproc)
-COPY nginx/default.conf /etc/nginx/conf.d/default.conf
 
 # =========================
 # Runtime stage
@@ -58,22 +57,26 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     zlib1g \
     mariadb-client \
     nginx \
-    php-fpm \
-    php-mysql \
-    php-gd \
-    php-mbstring \
-    php-xml \
-    php-curl \
-    php-zip \
+    php8.3-fpm \
+    php8.3-mysql \
+    php8.3-gd \
+    php8.3-mbstring \
+    php8.3-xml \
+    php8.3-curl \
+    php8.3-zip \
     && rm -rf /var/lib/apt/lists/*
 
+# TFS binary
 COPY --from=builder /build/forgottenserver/build/tfs /usr/local/bin/tfs
 
-COPY entrypoint.sh /entrypoint.sh
-COPY nginx/default.conf /etc/nginx/conf.d/default.conf
+# nginx template (do NOT write to /etc at runtime)
+COPY nginx/default.conf /etc/nginx/template.conf
 
+# entrypoint
+COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
+# Pterodactyl-compatible user
 RUN useradd -m -u 988 container
 USER container
 
